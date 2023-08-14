@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,10 +13,32 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// fetchGitignore fetches the gitignore file for a given programming language.
+// decodeBase64Response decodes a base64-encoded response and returns the decoded contents.
 //
-// lang: the programming language for which to fetch the gitignore file.
-// Returns the contents of the gitignore file as a byte slice and an error if any.
+// It takes in a byte slice containing the response and returns a byte slice with the decoded contents.
+// The function returns an error if there is an issue parsing the JSON or decoding the base64 content.
+func decodeBase64Response(response []byte) ([]byte, error) {
+	var result struct {
+		Content string `json:"content"`
+	}
+
+	err := json.Unmarshal(response, &result)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing JSON: %s", err)
+	}
+
+	contents, err := base64.StdEncoding.DecodeString(result.Content)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding base64: %s", err)
+	}
+
+	return contents, nil
+}
+
+// fetchGitignore fetches a gitignore file from the GitHub API based on the specified language.
+//
+// lang: The language for which the gitignore file is requested.
+// Returns the contents of the gitignore file as a byte array and an error if any.
 func fetchGitignore(lang string) ([]byte, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/github/gitignore/contents/%s.gitignore", lang)
 	response, err := http.Get(url)
@@ -28,7 +52,9 @@ func fetchGitignore(lang string) ([]byte, error) {
 		return nil, err
 	}
 
-	return body, nil
+	contents, err := decodeBase64Response(body)
+
+	return contents, nil
 }
 
 func main() {
