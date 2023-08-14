@@ -170,6 +170,12 @@ func main() {
 				Usage:   "list available languages",
 				Action:  listLanguages,
 			},
+			{
+				Name:    "preview",
+				Aliases: []string{"p"},
+				Usage:   "Preview the .gitignore template file",
+				Action:  previewCommand,
+			},
 		},
 	}
 
@@ -211,6 +217,21 @@ func initCommand(ctx *cli.Context) error {
 	}
 
 	fmt.Println(".gitignore file created successfully!")
+	return nil
+}
+
+func previewCommand(ctx *cli.Context) error {
+	language := strings.TrimSpace(ctx.Args().First())
+	if language == "" {
+		return errors.New("language is required")
+	}
+
+	content, err := fetchGitignore(language)
+	if err != nil {
+		return fmt.Errorf("error fetching gitignore content: %w", err)
+	}
+
+	fmt.Println(string(content))
 	return nil
 }
 
