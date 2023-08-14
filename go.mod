@@ -2,10 +2,7 @@ module github.com/xyugen/gitignite
 
 go 1.21.0
 
-require (
-	github.com/urfave/cli/v2 v2.25.7
-	golang.org/x/text v0.12.0
-)
+require github.com/urfave/cli/v2 v2.25.7
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect

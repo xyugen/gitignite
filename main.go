@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,42 +12,41 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 const RepositoryURL = "https://api.github.com/repos/github/gitignore"
 
 // decodeBase64Response decodes a base64-encoded response and returns the decoded contents.
 //
-// It takes in a byte slice containing the response and returns a byte slice with the decoded contents.
-// The function returns an error if there is an issue parsing the JSON or decoding the base64 content.
+// It takes in a string containing the base64-encoded response and returns a byte slice with the decoded contents.
+// The function returns an error if there is an issue decoding the base64 content or if the language is not found.
 func decodeBase64Response(content string) ([]byte, error) {
-	// Check if the language exists
 	if content == "" {
 		return nil, fmt.Errorf("language not found")
 	}
 
-	contents, err := base64.StdEncoding.DecodeString(content)
+	decodedContent, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding base64: %s", err)
 	}
 
-	return contents, nil
+	return decodedContent, nil
 }
 
-// DecodeJSONResponse decodes a JSON response and returns a map[string]string and an error.
 func decodeJSONResponse(response []byte) (string, error) {
-	var result struct {
+	var data struct {
 		Content string `json:"content"`
 	}
 
-	err := json.Unmarshal(response, &result)
-	if err != nil {
-		return "", fmt.Errorf("error parsing JSON: %s", err)
+	if len(response) == 0 {
+		return "", errors.New("empty response")
 	}
 
-	return result.Content, err
+	if err := json.Unmarshal(response, &data); err != nil {
+		return "", fmt.Errorf("error decoding JSON: %w", err)
+	}
+
+	return data.Content, nil
 }
 
 func decodeJSONResponseArray(response []byte) ([]string, error) {
@@ -54,8 +54,7 @@ func decodeJSONResponseArray(response []byte) ([]string, error) {
 		Name string `json:"name"`
 	}
 
-	err := json.Unmarshal(response, &results)
-	if err != nil {
+	if err := json.Unmarshal(response, &results); err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %s", err)
 	}
 
@@ -121,23 +120,23 @@ func fetchGitignore(lang string) ([]byte, error) {
 // Fetch available languages.
 func fetchLanguages() ([]string, error) {
 	url := fmt.Sprintf("%s/contents", RepositoryURL)
-	response, err := http.Get(url)
+	res, err := http.Get(url)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
-	defer response.Body.Close()
+	defer res.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return []string{}, err
-	}
-
-	jsonContents, err := decodeJSONResponseArray(body)
-	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
-	return jsonContents, nil
+	contents, err := decodeJSONResponseArray(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return contents, nil
 }
 
 func main() {
@@ -174,44 +173,43 @@ func main() {
 }
 
 func initCommand(ctx *cli.Context) error {
-	caser := cases.Title(language.English)
-	// Titlecase and trim the string so that it matches the template file name
-	language := caser.String(strings.Trim(ctx.Args().First(), " "))
+	// Get the language argument from the command line
+	language := strings.TrimSpace(ctx.Args().First())
 	if language == "" {
-		return fmt.Errorf("lang is required")
+		return errors.New("language is required")
 	}
 
+	// Check if the no-credits flag is set
 	noCredits := ctx.Bool("no-credits")
 
+	// Fetch the gitignore content for the specified language
 	content, err := fetchGitignore(language)
 	if err != nil {
-		fmt.Println("Error fetching gitignore content:", err)
-		return nil
+		return fmt.Errorf("error fetching gitignore content: %w", err)
 	}
 
+	// Add credits to the gitignore content if needed
 	content = addCredits(content, noCredits)
 
-	if err := os.WriteFile(".gitignore", content, 0644); err != nil {
-		fmt.Println("Error creating .gitignore file:", err)
-		return nil
-	} else {
-		fmt.Println(".gitignore file created successfully!")
+	// Write the gitignore content to a file
+	err = os.WriteFile(".gitignore", content, 0644)
+	if err != nil {
+		return fmt.Errorf("error creating .gitignore file: %w", err)
 	}
+
+	fmt.Println(".gitignore file created successfully!")
 	return nil
 }
 
 func listLanguages(ctx *cli.Context) error {
 	languages, err := fetchLanguages()
 	if err != nil {
-		fmt.Println("Error fetching languages:", err)
-		return nil
+		return fmt.Errorf("error fetching languages: %w", err)
 	}
 
 	fmt.Println("Available languages:")
 	for _, language := range languages {
-		// Don't accept strings without gitignore at the end and a string before that
 		if strings.HasSuffix(language, ".gitignore") {
-			// Take only strings with .gitignore at the end
 			language = strings.TrimSuffix(language, ".gitignore")
 			fmt.Println(language)
 		}
