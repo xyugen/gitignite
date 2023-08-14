@@ -66,28 +66,7 @@ func main() {
 				Name:    "init",
 				Aliases: []string{"i"},
 				Usage:   "generate .gitignore file from a language template",
-				Action: func(ctx *cli.Context) error {
-					// Titlecase and trim the string so that it matches the template file name
-					language := strings.ToTitle(strings.Trim(ctx.Args().First(), " "))
-
-					if language == "" {
-						return fmt.Errorf("lang is required")
-					}
-
-					content, err := fetchGitignore(language)
-					if err != nil {
-						fmt.Println("Error fetching gitignore content:", err)
-						return nil
-					}
-
-					if err := os.WriteFile(".gitignore", content, 0644); err != nil {
-						fmt.Println("Error creating .gitignore file:", err)
-						return nil
-					} else {
-						fmt.Println(".gitignore file created successfully!")
-					}
-					return nil
-				},
+				Action:  initCommand,
 			},
 		},
 	}
@@ -95,4 +74,27 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initCommand(ctx *cli.Context) error {
+	// Titlecase and trim the string so that it matches the template file name
+	language := strings.ToTitle(strings.Trim(ctx.Args().First(), " "))
+
+	if language == "" {
+		return fmt.Errorf("lang is required")
+	}
+
+	content, err := fetchGitignore(language)
+	if err != nil {
+		fmt.Println("Error fetching gitignore content:", err)
+		return nil
+	}
+
+	if err := os.WriteFile(".gitignore", content, 0644); err != nil {
+		fmt.Println("Error creating .gitignore file:", err)
+		return nil
+	} else {
+		fmt.Println(".gitignore file created successfully!")
+	}
+	return nil
 }
