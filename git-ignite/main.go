@@ -41,10 +41,8 @@ func main() {
 						Usage:    "programming language template",
 						Required: true,
 						Action: func(ctx *cli.Context, s string) error {
-							// Lowercase the string so that it matches the template file name
-							s = strings.ToTitle(s)
-							// Trim the string
-							s = strings.Trim(s, " ")
+							// Titlecase and trim the string so that it matches the template file name
+							s = strings.ToTitle(strings.Trim(s, " "))
 							return nil
 						},
 					},
