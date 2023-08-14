@@ -29,6 +29,11 @@ func decodeBase64Response(response []byte) ([]byte, error) {
 		return nil, fmt.Errorf("error parsing JSON: %s", err)
 	}
 
+	// Check if the language exists
+	if result.Content == "" {
+		return nil, fmt.Errorf("language not found")
+	}
+
 	contents, err := base64.StdEncoding.DecodeString(result.Content)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding base64: %s", err)
@@ -63,6 +68,9 @@ func fetchGitignore(lang string) ([]byte, error) {
 	}
 
 	contents, err := decodeBase64Response(body)
+	if err != nil {
+		return nil, err
+	}
 
 	return contents, nil
 }
