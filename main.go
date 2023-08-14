@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const RepositoryURL = "https://api.github.com/repos/github/gitignore"
@@ -147,9 +149,9 @@ func main() {
 }
 
 func initCommand(ctx *cli.Context) error {
+	caser := cases.Title(language.English)
 	// Titlecase and trim the string so that it matches the template file name
-	language := strings.ToTitle(strings.Trim(ctx.Args().First(), " "))
-
+	language := caser.String(strings.Trim(ctx.Args().First(), " "))
 	if language == "" {
 		return fmt.Errorf("lang is required")
 	}
