@@ -11,6 +11,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// fetchGitignore fetches the gitignore file for a given programming language.
+//
+// lang: the programming language for which to fetch the gitignore file.
+// Returns the contents of the gitignore file as a byte slice and an error if any.
 func fetchGitignore(lang string) ([]byte, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/github/gitignore/contents/%s.gitignore", lang)
 	response, err := http.Get(url)
@@ -40,9 +44,26 @@ func main() {
 						Aliases:  []string{"l"},
 						Usage:    "programming language template",
 						Required: true,
-						Action: func(ctx *cli.Context, s string) error {
+						Action: func(ctx *cli.Context) error {
 							// Titlecase and trim the string so that it matches the template file name
-							s = strings.ToTitle(strings.Trim(s, " "))
+							language = strings.ToTitle(strings.Trim(ctx.Args().First(), " "))
+
+							if language == "" {
+								return fmt.Errorf("lang is required")
+							}
+
+							content, err := fetchGitignore(language)
+							if err != nil {
+								fmt.Println("Error fetching gitignore content:", err)
+								return nil
+							}
+
+							if err := os.WriteFile(".gitignore", content, 0644); err != nil {
+								fmt.Println("Error creating .gitignore file:", err)
+								return nil
+							} else {
+								fmt.Println(".gitignore file created successfully!")
+							}
 							return nil
 						},
 					},
