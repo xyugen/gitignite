@@ -176,6 +176,12 @@ func main() {
 				Usage:   "Preview the .gitignore template file",
 				Action:  previewCommand,
 			},
+			{
+				Name:    "search",
+				Aliases: []string{"s"},
+				Usage:   "Search for a language",
+				Action:  searchCommand,
+			},
 		},
 	}
 
@@ -232,6 +238,30 @@ func previewCommand(ctx *cli.Context) error {
 	}
 
 	fmt.Println(string(content))
+	return nil
+}
+
+func searchCommand(ctx *cli.Context) error {
+	language := strings.TrimSpace(ctx.Args().First())
+	if language == "" {
+		return errors.New("language is required")
+	}
+
+	languages, err := fetchLanguages()
+	if err != nil {
+		return fmt.Errorf("error fetching languages: %w", err)
+	}
+
+	// Searches for the languages close or similar to language
+	for _, lang := range languages {
+		if strings.HasSuffix(lang, ".gitignore") {
+			lang = strings.TrimSuffix(lang, ".gitignore")
+			if strings.Contains(strings.ToLower(lang), strings.ToLower(language)) {
+				fmt.Println(lang)
+			}
+		}
+	}
+
 	return nil
 }
 
