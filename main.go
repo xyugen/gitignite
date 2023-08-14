@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -156,6 +157,11 @@ func main() {
 						Usage:   "Do not add credits to the generated .gitignore file",
 						Value:   false,
 					},
+					&cli.StringFlag{
+						Name:    "output",
+						Aliases: []string{"o"},
+						Usage:   "Specify the output directory",
+					},
 				},
 			},
 			{
@@ -182,6 +188,12 @@ func initCommand(ctx *cli.Context) error {
 	// Check if the no-credits flag is set
 	noCredits := ctx.Bool("no-credits")
 
+	// output directory
+	outputDir := ctx.String("output")
+	if outputDir == "" {
+		outputDir = "."
+	}
+
 	// Fetch the gitignore content for the specified language
 	content, err := fetchGitignore(language)
 	if err != nil {
@@ -192,7 +204,8 @@ func initCommand(ctx *cli.Context) error {
 	content = addCredits(content, noCredits)
 
 	// Write the gitignore content to a file
-	err = os.WriteFile(".gitignore", content, 0644)
+	outputFile := filepath.Join(outputDir, ".gitignore")
+	err = os.WriteFile(outputFile, content, 0644)
 	if err != nil {
 		return fmt.Errorf("error creating .gitignore file: %w", err)
 	}
