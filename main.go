@@ -144,18 +144,18 @@ func main() {
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "version",
 		Aliases: []string{"v"},
-		Usage:   "Print the version",
+		Usage:   "print the version",
 	}
 
 	app := &cli.App{
 		Name:    "gitignite",
 		Usage:   "generate .gitignore file from a template",
-		Version: "1.2.0",
+		Version: "1.2.1",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "verbose",
 				Aliases: []string{"V"},
-				Usage:   "Enable verbose output",
+				Usage:   "enable verbose output",
 			},
 		},
 		Commands: []*cli.Command{
@@ -168,13 +168,13 @@ func main() {
 					&cli.BoolFlag{
 						Name:    "no-credits",
 						Aliases: []string{"nc"},
-						Usage:   "Do not add credits to the generated .gitignore file",
+						Usage:   "do not add credits to the generated .gitignore file",
 						Value:   false,
 					},
 					&cli.StringFlag{
 						Name:    "output",
 						Aliases: []string{"o"},
-						Usage:   "Specify the output directory",
+						Usage:   "specify the output directory",
 					},
 				},
 			},
@@ -187,13 +187,13 @@ func main() {
 			{
 				Name:    "preview",
 				Aliases: []string{"p"},
-				Usage:   "Preview the .gitignore template file",
+				Usage:   "preview the .gitignore template",
 				Action:  previewCommand,
 			},
 			{
 				Name:    "search",
 				Aliases: []string{"s"},
-				Usage:   "Search for a language",
+				Usage:   "search for a language .gitignore template",
 				Action:  searchCommand,
 			},
 		},
