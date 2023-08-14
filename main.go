@@ -141,9 +141,16 @@ func fetchLanguages() ([]string, error) {
 }
 
 func main() {
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"v"},
+		Usage:   "Print the version",
+	}
+
 	app := &cli.App{
-		Name:  "gitignite",
-		Usage: "generate .gitignore file from a template",
+		Name:    "gitignite",
+		Usage:   "generate .gitignore file from a template",
+		Version: "1.2.0",
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
