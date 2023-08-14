@@ -25,6 +25,8 @@ For example, to generate a `.gitignore` file for Python, you would run:
 gitignite init python
 ```
 
+You can also use the `--no-credits` flag to exclude credits from the generated `.gitignore` file.
+
 ## Credits
 
 This tool is inspired by and credits [github/gitignore](https://github.com/github/gitignore) for providing the language templates.
