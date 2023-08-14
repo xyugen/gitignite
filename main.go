@@ -151,6 +151,13 @@ func main() {
 		Name:    "gitignite",
 		Usage:   "generate .gitignore file from a template",
 		Version: "1.2.0",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Aliases: []string{"V"},
+				Usage:   "Enable verbose output",
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
@@ -199,9 +206,15 @@ func main() {
 
 func initCommand(ctx *cli.Context) error {
 	// Get the language argument from the command line
+	if ctx.Bool("verbose") {
+		fmt.Println("Fetching languages...")
+	}
 	language := strings.TrimSpace(ctx.Args().First())
 	if language == "" {
 		return errors.New("language is required")
+	}
+	if ctx.Bool("verbose") {
+		fmt.Println("Languages fetched successfully!")
 	}
 
 	// Check if the no-credits flag is set
@@ -214,9 +227,15 @@ func initCommand(ctx *cli.Context) error {
 	}
 
 	// Fetch the gitignore content for the specified language
+	if ctx.Bool("verbose") {
+		fmt.Println("Fetching gitignore content for", language, "...")
+	}
 	content, err := fetchGitignore(language)
 	if err != nil {
 		return fmt.Errorf("error fetching gitignore content: %w", err)
+	}
+	if ctx.Bool("verbose") {
+		fmt.Println("Gitignore content fetched successfully!")
 	}
 
 	// Add credits to the gitignore content if needed
@@ -224,6 +243,9 @@ func initCommand(ctx *cli.Context) error {
 
 	// Write the gitignore content to a file
 	outputFile := filepath.Join(outputDir, ".gitignore")
+	if ctx.Bool("verbose") {
+		fmt.Println("Writing .gitignore file to", outputDir, "...")
+	}
 	err = os.WriteFile(outputFile, content, 0644)
 	if err != nil {
 		return fmt.Errorf("error creating .gitignore file: %w", err)
@@ -273,9 +295,15 @@ func searchCommand(ctx *cli.Context) error {
 }
 
 func listLanguages(ctx *cli.Context) error {
+	if ctx.Bool("verbose") {
+		fmt.Println("Fetching available languages...")
+	}
 	languages, err := fetchLanguages()
 	if err != nil {
 		return fmt.Errorf("error fetching languages: %w", err)
+	}
+	if ctx.Bool("verbose") {
+		fmt.Println("Languages fetched successfully!")
 	}
 
 	fmt.Println("Available languages:")
