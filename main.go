@@ -13,6 +13,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const RepositoryURL = "https://api.github.com/repos/github/gitignore"
+
 // decodeBase64Response decodes a base64-encoded response and returns the decoded contents.
 //
 // It takes in a byte slice containing the response and returns a byte slice with the decoded contents.
@@ -48,7 +50,7 @@ func addCredits(contents []byte) []byte {
 // lang: The language for which the gitignore file is requested.
 // Returns the contents of the gitignore file as a byte array and an error if any.
 func fetchGitignore(lang string) ([]byte, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/github/gitignore/contents/%s.gitignore", lang)
+	url := fmt.Sprintf("%s/contents/%s.gitignore", RepositoryURL, lang)
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
