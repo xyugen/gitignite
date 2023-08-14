@@ -19,8 +19,24 @@ const RepositoryURL = "https://api.github.com/repos/github/gitignore"
 //
 // It takes in a byte slice containing the response and returns a byte slice with the decoded contents.
 // The function returns an error if there is an issue parsing the JSON or decoding the base64 content.
-func decodeBase64Response(response []byte) ([]byte, error) {
+func decodeBase64Response(content string) ([]byte, error) {
+	// Check if the language exists
+	if content == "" {
+		return nil, fmt.Errorf("language not found")
+	}
+
+	contents, err := base64.StdEncoding.DecodeString(content)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding base64: %s", err)
+	}
+
+	return contents, nil
+}
+
+// DecodeJSONResponse decodes a JSON response and returns a map[string]string and an error.
+func decodeJSONResponse(response []byte) (map[string]string, error) {
 	var result struct {
+		Name    string `json:"name"`
 		Content string `json:"content"`
 	}
 
@@ -29,17 +45,10 @@ func decodeBase64Response(response []byte) ([]byte, error) {
 		return nil, fmt.Errorf("error parsing JSON: %s", err)
 	}
 
-	// Check if the language exists
-	if result.Content == "" {
-		return nil, fmt.Errorf("language not found")
-	}
-
-	contents, err := base64.StdEncoding.DecodeString(result.Content)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding base64: %s", err)
-	}
-
-	return contents, nil
+	return map[string]string{
+		"name":    result.Name,
+		"content": result.Content,
+	}, err
 }
 
 // addCredits adds credits to the given contents.
@@ -67,7 +76,8 @@ func fetchGitignore(lang string) ([]byte, error) {
 		return nil, err
 	}
 
-	contents, err := decodeBase64Response(body)
+	jsonContents, err := decodeJSONResponse(body)
+	contents, err := decodeBase64Response(jsonContents["content"])
 	if err != nil {
 		return nil, err
 	}
