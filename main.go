@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const RepositoryURL = "https://api.github.com/repos/github/gitignore"
@@ -27,6 +29,11 @@ func decodeBase64Response(response []byte) ([]byte, error) {
 	err := json.Unmarshal(response, &result)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %s", err)
+	}
+
+	// Check if result.Content is not empty
+	if result.Content == "" {
+		return nil, fmt.Errorf("language not found")
 	}
 
 	contents, err := base64.StdEncoding.DecodeString(result.Content)
@@ -63,6 +70,9 @@ func fetchGitignore(lang string) ([]byte, error) {
 	}
 
 	contents, err := decodeBase64Response(body)
+	if err != nil {
+		return nil, err
+	}
 
 	return contents, nil
 }
@@ -87,9 +97,9 @@ func main() {
 }
 
 func initCommand(ctx *cli.Context) error {
+	caser := cases.Title(language.English)
 	// Titlecase and trim the string so that it matches the template file name
-	language := strings.ToTitle(strings.Trim(ctx.Args().First(), " "))
-
+	language := caser.String(strings.Trim(ctx.Args().First(), " "))
 	if language == "" {
 		return fmt.Errorf("lang is required")
 	}
