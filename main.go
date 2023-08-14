@@ -34,21 +34,35 @@ func decodeBase64Response(content string) ([]byte, error) {
 }
 
 // DecodeJSONResponse decodes a JSON response and returns a map[string]string and an error.
-func decodeJSONResponse(response []byte) (map[string]string, error) {
+func decodeJSONResponse(response []byte) (string, error) {
 	var result struct {
-		Name    string `json:"name"`
 		Content string `json:"content"`
 	}
 
 	err := json.Unmarshal(response, &result)
 	if err != nil {
+		return "", fmt.Errorf("error parsing JSON: %s", err)
+	}
+
+	return result.Content, err
+}
+
+func decodeJSONResponseArray(response []byte) ([]string, error) {
+	var results []struct {
+		Name string `json:"name"`
+	}
+
+	err := json.Unmarshal(response, &results)
+	if err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %s", err)
 	}
 
-	return map[string]string{
-		"name":    result.Name,
-		"content": result.Content,
-	}, err
+	decodedResponses := make([]string, len(results))
+	for i, result := range results {
+		decodedResponses[i] = result.Name
+	}
+
+	return decodedResponses, nil
 }
 
 // addCredits adds credits to the given contents.
@@ -77,12 +91,34 @@ func fetchGitignore(lang string) ([]byte, error) {
 	}
 
 	jsonContents, err := decodeJSONResponse(body)
-	contents, err := decodeBase64Response(jsonContents["content"])
+	contents, err := decodeBase64Response(jsonContents)
 	if err != nil {
 		return nil, err
 	}
 
 	return contents, nil
+}
+
+// Fetch available languages.
+func fetchLanguages() ([]string, error) {
+	url := fmt.Sprintf("%s/contents", RepositoryURL)
+	response, err := http.Get(url)
+	if err != nil {
+		return []string{}, err
+	}
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return []string{}, err
+	}
+
+	jsonContents, err := decodeJSONResponseArray(body)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return jsonContents, nil
 }
 
 func main() {
@@ -95,6 +131,12 @@ func main() {
 				Aliases: []string{"i"},
 				Usage:   "generate .gitignore file from a language template",
 				Action:  initCommand,
+			},
+			{
+				Name:    "langs",
+				Aliases: []string{"l"},
+				Usage:   "list available languages",
+				Action:  listLanguages,
 			},
 		},
 	}
@@ -126,5 +168,25 @@ func initCommand(ctx *cli.Context) error {
 	} else {
 		fmt.Println(".gitignore file created successfully!")
 	}
+	return nil
+}
+
+func listLanguages(ctx *cli.Context) error {
+	languages, err := fetchLanguages()
+	if err != nil {
+		fmt.Println("Error fetching languages:", err)
+		return nil
+	}
+
+	fmt.Println("Available languages:")
+	for _, language := range languages {
+		// Don't accept strings without gitignore at the end and a string before that
+		if strings.HasSuffix(language, ".gitignore") {
+			// Take only strings with .gitignore at the end
+			language = strings.TrimSuffix(language, ".gitignore")
+			fmt.Println(language)
+		}
+	}
+
 	return nil
 }
