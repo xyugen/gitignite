@@ -7,7 +7,6 @@ Git Ignite is a command-line tool for generating `.gitignore` files from languag
 You can install Git Ignite using the following command:
 
 ```sh
-go get github.com/urfave/cli/v2
 go install github.com/xyugen/gitignite
 ```
 
